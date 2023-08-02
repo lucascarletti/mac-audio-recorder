@@ -43,11 +43,6 @@ class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
             
             try audioEngine.start()
             recording = true
-            
-            DispatchQueue.main.asyncAfter(deadline: .now()+5) { [weak self] in
-                print("Finished recording")
-                self?.stopRecording()
-            }
         } catch {
             print(error)
         }
