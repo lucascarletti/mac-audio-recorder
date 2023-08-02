@@ -12,6 +12,8 @@ import AVFoundation
 class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var activeRecorder: AVAudioRecorder?
     private let audioEngine = AVAudioEngine()
+
+    @Published var micAccessAllowed = false
     
     @Published var playing = false
     @Published var recording = false
@@ -21,9 +23,11 @@ class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
     
     override init() {
         print("AudioRecorder init() - Started Recording")
+        super.init()
+        checkMicrophonePermissions()
     }
     
-    func startRecording() {
+    public func startRecording() {
         let input = audioEngine.inputNode
         let bus = 0
         let inputFormat = input.inputFormat(forBus: bus)
@@ -56,6 +60,11 @@ class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
             recorded = true
         }
     }
+    
+    public func openSystemPreferences() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") else { return }
+        NSWorkspace.shared.open(url)
+    }
 }
 
 extension AudioRecorder {
@@ -63,12 +72,12 @@ extension AudioRecorder {
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .authorized:
             // Microphone access is already granted, proceed to set up audio recording
-            print("you can move on")
+            micAccessAllowed = true
         case .notDetermined:
             // Request microphone access if it's not determined yet
             AVCaptureDevice.requestAccess(for: .audio) { [weak self] granted in
                 if granted {
-                    print("you can move on")
+                    self?.micAccessAllowed = true
                 } else {
                     // Handle access denial case
                     print("Microphone access denied.")
@@ -76,8 +85,10 @@ extension AudioRecorder {
             }
         case .denied, .restricted:
             // Handle access denial or restrictions
+            openSystemPreferences()
             print("Microphone access denied or restricted.")
         @unknown default:
+            openSystemPreferences()
             print("Unknown microphone authorization status.")
         }
     }
