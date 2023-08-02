@@ -31,6 +31,7 @@ struct RecordingView: View {
                         recorder.playing = true
                         player.startPlayback(audio: recorder.outputFile!.url)
                     } else {
+                        recorder.recording = true
                         recorder.startRecording()
                     }
                 }) {
